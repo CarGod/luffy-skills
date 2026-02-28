@@ -132,12 +132,16 @@ A horizontal flow from left to right: a code editor icon → an arrow → a box 
 
 ---
 
-## 第四步：生成图片
+## 第四步：检查环境变量并生成图片
 
-使用 `gemini-image-gen` Skill 的脚本生成每张插图。通过 `run_command` 工具调用以下脚本：
+在生成图片之前，必须确保环境变量 `GEMINI_ANTIGRAVITY_KEY` 存在。
+
+1. **检查密钥**：先执行 `echo $GEMINI_ANTIGRAVITY_KEY` 或通过 Python 环境检查密钥是否已配置。
+2. **处理缺失情况**：如果不存在，应向用户询问该密钥，或者询问去哪个配置文件里读取，**不要盲目执行 `source ~/.zshrc`**（可能导致脚本挂起）。获取到密钥后，在命令前加上 `export GEMINI_ANTIGRAVITY_KEY="..."`。
+3. **调用生成脚本**：如果密钥已存在环境或通过 export 配置好后，使用 `run_command` 工具调用生成脚本：
 
 ```bash
-source ~/.zshrc 2>/dev/null; python3 gemini-image-gen/scripts/generate_image.py \
+python3 gemini-image-gen/scripts/generate_image.py \
   --prompt "<提示词>" \
   --aspect-ratio 16:9 \
   --output "<Markdown文件目录>/assets/illustration_01_xxx.png"
@@ -151,7 +155,7 @@ source ~/.zshrc 2>/dev/null; python3 gemini-image-gen/scripts/generate_image.py 
 - **--model**：默认使用 `flash`，如需更高质量可使用 `pro`。
 - **如果生成效果不理想**：调整提示词后重新生成，但不要超过 2 次重试。
 
-> **⚠️ 重要**：命令前必须加 `source ~/.zshrc 2>/dev/null;` 以加载 `GEMINI_ANTIGRAVITY_KEY` 环境变量。
+> **⚠️ 重要**：调用脚本时，环境里必须要有 `GEMINI_ANTIGRAVITY_KEY` 变量。如环境变量未准备好，需用 `export GEMINI_ANTIGRAVITY_KEY="xxx"; python3 ...` 方式执行。
 
 ### 生成顺序
 
@@ -163,14 +167,14 @@ source ~/.zshrc 2>/dev/null; python3 gemini-image-gen/scripts/generate_image.py 
 # 先创建 assets 目录
 mkdir -p "<Markdown文件目录>/assets"
 
-# 生成题图
-source ~/.zshrc 2>/dev/null; python3 gemini-image-gen/scripts/generate_image.py \
+# 假设环境变量已存在，直接调用生成题图
+python3 gemini-image-gen/scripts/generate_image.py \
   --prompt "Wide landscape composition... Central concept: An adorable robot..." \
   --aspect-ratio 16:9 \
   --output "<Markdown文件目录>/assets/illustration_01_overview.png"
 
 # 生成章节配图
-source ~/.zshrc 2>/dev/null; python3 gemini-image-gen/scripts/generate_image.py \
+python3 gemini-image-gen/scripts/generate_image.py \
   --prompt "Wide landscape composition... A message envelope icon..." \
   --aspect-ratio 16:9 \
   --output "<Markdown文件目录>/assets/illustration_02_routing.png"
