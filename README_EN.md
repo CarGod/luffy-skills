@@ -13,7 +13,21 @@
 | [md-illustration-inserter](./md-illustration-inserter/) | Auto-generate hand-drawn style illustrations and insert them into Markdown articles | 2.0 |
 | [video-subtitle-extractor](./video-subtitle-extractor/) | Extract subtitles from YouTube, Bilibili, and other platforms via yt-dlp | 1.0 |
 
-## 🚀 Getting Started
+## ⚡ One-Click Install (Lazy Mode)
+
+Copy the prompt below and send it to your AI Agent (Claude Code / Gemini CLI / Antigravity, etc.) to auto-install:
+
+```
+Install Agent Skills for me:
+1. Clone https://github.com/CarGod/luffy-skills.git into ~/skills (if it already exists, run git pull to update)
+2. If ~/.gemini/antigravity/skills doesn't exist, create a symlink pointing to ~/skills
+3. Install Python dependencies for video-subtitle-extractor: pip install -r ~/skills/video-subtitle-extractor/requirements.txt
+4. Check if the GEMINI_ANTIGRAVITY_KEY environment variable is set. If not, remind me to get one at https://aistudio.google.com/apikey and configure it
+```
+
+---
+
+## 🚀 Manual Installation
 
 ### 1. Clone the Repository
 

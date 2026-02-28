@@ -13,7 +13,21 @@
 | [md-illustration-inserter](./md-illustration-inserter/) | 为 Markdown 文章自动生成手绘风格插图并插入到对应位置 | 2.0 |
 | [video-subtitle-extractor](./video-subtitle-extractor/) | 从 YouTube、Bilibili 等平台提取视频字幕，转换为可读文本 | 1.0 |
 
-## 🚀 快速开始
+## ⚡ 一键安装（懒人版）
+
+复制下面这段话，直接发给你的 AI Agent（Claude Code / Gemini CLI / Antigravity 等），即可自动完成安装：
+
+```
+帮我安装 Agent Skills：
+1. 克隆仓库 https://github.com/CarGod/luffy-skills.git 到 ~/skills 目录（如果已存在则 git pull 更新）
+2. 如果 ~/.gemini/antigravity/skills 不存在，创建符号链接指向 ~/skills
+3. 安装 video-subtitle-extractor 的 Python 依赖：pip install -r ~/skills/video-subtitle-extractor/requirements.txt
+4. 检查环境变量 GEMINI_ANTIGRAVITY_KEY 是否已设置，如果没有，提醒我去 https://aistudio.google.com/apikey 获取并配置
+```
+
+---
+
+## 🚀 手动安装
 
 ### 1. 克隆仓库
 
