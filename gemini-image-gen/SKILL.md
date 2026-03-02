@@ -4,7 +4,7 @@ description: 使用 Gemini API 生成或编辑图片，支持指定宽高比（1
 license: MIT
 metadata:
   author: Luffy Liu
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Gemini Image Generation Skill
@@ -64,6 +64,8 @@ gemini-image-gen/scripts/generate_image.py
 | `--model` | `-m` | ❌ | 模型：`flash` `pro` `2.5-flash` | `flash` |
 | `--image-size` | `-s` | ❌ | 分辨率：`1K` `2K` `4K`（仅 Gemini 3 模型） | 不设置 |
 | `--input-image` | `-i` | ❌ | 参考图片路径（图片编辑模式） | 不设置 |
+| `--max-retries` | `-r` | ❌ | 遇到重度 API 错误或文字校验失败时的最大重试次数 | `3` |
+| `--verify-text` | `-vt`| ❌ | 自动使用视觉模型检查画面是否明确包含特定文字(如 `"LLM"`) | 不设置 |
 
 ---
 
@@ -124,8 +126,9 @@ python3 gemini-image-gen/scripts/generate_image.py \
 | `pro` | 专业级图片、复杂指令 | 支持 4K、思维链优化构图 |
 | `2.5-flash` | 高并发批量生成 | 速度最快，1024px 分辨率 |
 
-## 错误处理
+## 错误处理与防卡死机制
 
-- 如果 `GEMINI_ANTIGRAVITY_KEY` 未设置，脚本会报错并退出
-- API 错误会打印详细的错误信息（HTTP 状态码 + 错误 JSON）
-- 网络超时设置为 120 秒
+- **生成超时防卡死**：网络超时已严格限制为 60 秒，超时会立即退出或重试，避免 Agent 执行命令行时长期挂起。
+- **图片文字校验**：当指定了 `--verify-text "文字内容"` 时，脚本会在生成图片后，自动调用 2.5-flash 视觉模型验证图片中是否成功绘制了该文字。如果不包含或拼写错误，会自动将其废弃并重试（直到 `--max-retries` 耗尽）。
+- **空白返回值重试**：当模型因复杂度或策略过滤器拒绝生图（只返回文字或 No candidates）时，脚本会自动进行重试。
+- 如果 `GEMINI_ANTIGRAVITY_KEY` 未设置，脚本会报错并退出。
