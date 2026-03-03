@@ -10,7 +10,9 @@
 |-------|-------------|---------|
 | [create-agent-skill](./create-agent-skill/) | Scaffolds new Agent Skills with proper directory structure and SKILL.md template | 1.0 |
 | [gemini-image-gen](./gemini-image-gen/) | Generate or edit images via Gemini API with custom aspect ratios, resolutions, and model selection | 1.0 |
+| [git-commit-convention](./git-commit-convention/) | Git commit message convention enforcing Chinese descriptions with structured format | 1.0 |
 | [md-illustration-inserter](./md-illustration-inserter/) | Auto-generate hand-drawn style illustrations and insert them into Markdown articles | 2.0 |
+| [vibe-product-designer](./vibe-product-designer/) | AI-era product design assistant with non-deterministic thinking and rapid prototyping | 1.0 |
 | [video-subtitle-extractor](./video-subtitle-extractor/) | Extract subtitles from YouTube, Bilibili, and other platforms via yt-dlp | 1.0 |
 
 ## ⚡ One-Click Install (Lazy Mode)
@@ -61,7 +63,11 @@ luffy-skills/
 │   ├── README.md
 │   └── scripts/
 │       └── generate_image.py
+├── git-commit-convention/       # Git commit convention
+│   └── SKILL.md
 ├── md-illustration-inserter/    # Markdown illustration inserter
+│   └── SKILL.md
+├── vibe-product-designer/       # AI product design assistant
 │   └── SKILL.md
 └── video-subtitle-extractor/    # Video subtitle extraction
     ├── SKILL.md

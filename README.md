@@ -10,7 +10,9 @@
 |-------|------|------|
 | [create-agent-skill](./create-agent-skill/) | 帮助用户创建符合规范的新 Agent Skill，包括目录结构和 SKILL.md 模板 | 1.0 |
 | [gemini-image-gen](./gemini-image-gen/) | 使用 Gemini API 生成或编辑图片，支持自定义宽高比、分辨率和模型选择 | 1.0 |
+| [git-commit-convention](./git-commit-convention/) | Git Commit 提交规范，确保 commit 消息使用中文、格式规范、内容简洁 | 1.0 |
 | [md-illustration-inserter](./md-illustration-inserter/) | 为 Markdown 文章自动生成手绘风格插图并插入到对应位置 | 2.0 |
+| [vibe-product-designer](./vibe-product-designer/) | AI 时代的产品设计助手，用非确定性思维快速生成产品文档 | 1.0 |
 | [video-subtitle-extractor](./video-subtitle-extractor/) | 从 YouTube、Bilibili 等平台提取视频字幕，转换为可读文本 | 1.0 |
 
 ## ⚡ 一键安装（懒人版）
@@ -61,7 +63,11 @@ luffy-skills/
 │   ├── README.md
 │   └── scripts/
 │       └── generate_image.py
+├── git-commit-convention/       # Git Commit 提交规范
+│   └── SKILL.md
 ├── md-illustration-inserter/    # Markdown 文章配图
+│   └── SKILL.md
+├── vibe-product-designer/       # AI 产品设计助手
 │   └── SKILL.md
 └── video-subtitle-extractor/    # 视频字幕提取
     ├── SKILL.md
