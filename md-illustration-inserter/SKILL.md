@@ -137,48 +137,118 @@ A horizontal flow from left to right: a code editor icon → an arrow → a box 
 在生成图片之前，必须确保环境变量 `GEMINI_ANTIGRAVITY_KEY` 存在。
 
 1. **检查密钥**：先执行 `echo $GEMINI_ANTIGRAVITY_KEY` 或通过 Python 环境检查密钥是否已配置。
-2. **处理缺失情况**：如果不存在，应向用户询问该密钥，或者询问去哪个配置文件里读取，**不要盲目执行 `source ~/.zshrc`**（可能导致脚本挂起）。获取到密钥后，在命令前加上 `export GEMINI_ANTIGRAVITY_KEY="..."`。
-3. **调用生成脚本**：如果密钥已存在环境或通过 export 配置好后，使用 `run_command` 工具调用生成脚本：
+2. **处理缺失情况**：如果不存在，应向用户询问该密钥，或者询问去哪个配置文件里读取，**不要盲目执行 `source ~/.zshrc`**（可能导致脚本挂起）。获取到密钥后，在 Python 脚本中通过 `os.environ` 设置。
+
+### ⚠️ 必须使用 Python 脚本调用（禁止直接 shell 执行）
+
+> **严禁**在终端中直接用 `python3 generate_image.py --prompt "..."` 方式调用！
+>
+> 图片生成的提示词通常很长且包含大量特殊字符（引号、换行、中文等），直接在 shell 中执行会导致：
+> - 多行文本转义错乱
+> - 中文字符被截断或乱码
+> - 引号嵌套导致命令解析失败
+>
+> **正确做法**：创建一个临时 Python 脚本，在脚本中用 Python 字符串定义提示词，通过 `subprocess` 调用 `generate_image.py`。
+
+### 调用方式
+
+**第一步**：创建临时 Python 脚本（写入 `/tmp/gen_illustrations.py`），模板如下：
+
+```python
+import subprocess
+import sys
+import os
+
+SCRIPT = "<gemini-image-gen 的 generate_image.py 绝对路径>"
+OUT_DIR = "<Markdown文件目录>/assets"
+
+# 风格前缀（所有图片共用）
+STYLE_PREFIX = (
+    "Full-bleed hand-drawn sketch illustration that fills the entire image. "
+    "Clean white background with very subtle light gray texture. "
+    "Soft watercolor wash accents in gentle tones (soft blue, sage green, light coral, lavender, peach). "
+    "Simple doodle-style icons and elements with thin ink outlines. "
+    "Balanced composition that utilizes the full width and height of the canvas. "
+    "Cute, friendly, and approachable visual tone. "
+    "Small decorative elements scattered around: tiny stars, sparkles, dots, and simple shapes. "
+    "Chinese text labels rendered in a casual handwritten font style. "
+    "The overall feel is like a beautifully illustrated notebook page or mind-map sketch. "
+)
+
+# 定义所有待生成的图片
+images = [
+    {
+        "name": "illustration_01_overview.png",
+        "prompt": STYLE_PREFIX + (
+            "Central concept: <根据文章内容描述具体的画面>. "
+            'Chinese text labels reading "关键词1", "关键词2". '
+        ),
+    },
+    {
+        "name": "illustration_02_chapter1.png",
+        "prompt": STYLE_PREFIX + (
+            "<根据第二张图片对应段落的内容描述画面>. "
+            'Chinese text labels reading "关键词". '
+        ),
+    },
+    # ... 按需添加更多图片
+]
+
+os.makedirs(OUT_DIR, exist_ok=True)
+
+for i, img in enumerate(images):
+    output_path = os.path.join(OUT_DIR, img["name"])
+    print(f"\n{'='*50}")
+    print(f"Generating image {i+1}/{len(images)}: {img['name']}")
+    print(f"{'='*50}")
+
+    cmd = [
+        sys.executable, SCRIPT,
+        "--prompt", img["prompt"],
+        "--aspect-ratio", "16:9",
+        "--output", output_path,
+    ]
+
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+
+    if result.stdout:
+        print(result.stdout[-500:])
+    if result.stderr:
+        print("STDERR:", result.stderr[-500:])
+
+    if result.returncode != 0:
+        print(f"ERROR: Failed to generate {img['name']}")
+    else:
+        print(f"SUCCESS: {img['name']}")
+
+print("\nAll done!")
+for f in sorted(os.listdir(OUT_DIR)):
+    fpath = os.path.join(OUT_DIR, f)
+    if os.path.isfile(fpath):
+        print(f"  {f} ({os.path.getsize(fpath)} bytes)")
+```
+
+**第二步**：使用 `run_command` 执行该脚本：
 
 ```bash
-python3 gemini-image-gen/scripts/generate_image.py \
-  --prompt "<提示词>" \
-  --aspect-ratio 16:9 \
-  --output "<Markdown文件目录>/assets/illustration_01_xxx.png"
+python3 /tmp/gen_illustrations.py
 ```
 
 ### 调用规范
 
-- **--prompt**：使用第三步中构造的完整提示词（风格前缀 + 具体内容描述）。
-- **--aspect-ratio**：固定使用 `16:9`，生成横版配图。
-- **--output**：直接输出到 Markdown 文件同级的 `assets/` 目录，文件名格式为 `illustration_章节编号_关键词.png`，例如 `illustration_01_overview.png`、`illustration_02_routing.png`。
+- **STYLE_PREFIX**：保持统一的风格前缀，所有图片共用，确保视觉风格一致。
+- **prompt 拼接**：在每张图片的 `prompt` 字段中，用 Python 字符串拼接风格前缀和具体内容描述，**完全避免 shell 转义问题**。
+- **--aspect-ratio**：固定使用 `16:9`，生成横版配图。如文章用于竖版场景（如小红书），可改为 `3:4`。
+- **--output**：直接输出到 Markdown 文件同级的 `assets/` 目录，文件名格式为 `illustration_章节编号_关键词.png`。
 - **--model**：默认使用 `flash`，如需更高质量可使用 `pro`。
-- **如果生成效果不理想**：调整提示词后重新生成，但不要超过 2 次重试。
+- **如果生成效果不理想**：调整对应图片的 `prompt` 后重新运行脚本（可注释掉已成功的图片），但不要超过 2 次重试。
+- **超时设置**：每张图片 `timeout=120` 秒，足够 API 响应。
 
-> **⚠️ 重要**：调用脚本时，环境里必须要有 `GEMINI_ANTIGRAVITY_KEY` 变量。如环境变量未准备好，需用 `export GEMINI_ANTIGRAVITY_KEY="xxx"; python3 ...` 方式执行。
+> **⚠️ 重要**：调用脚本时，环境里必须要有 `GEMINI_ANTIGRAVITY_KEY` 变量。如未配置，可在脚本开头加入 `os.environ["GEMINI_ANTIGRAVITY_KEY"] = "xxx"`。
 
 ### 生成顺序
 
-按照插图在文章中出现的顺序依次生成。
-
-### 调用示例
-
-```bash
-# 先创建 assets 目录
-mkdir -p "<Markdown文件目录>/assets"
-
-# 假设环境变量已存在，直接调用生成题图
-python3 gemini-image-gen/scripts/generate_image.py \
-  --prompt "Wide landscape composition... Central concept: An adorable robot..." \
-  --aspect-ratio 16:9 \
-  --output "<Markdown文件目录>/assets/illustration_01_overview.png"
-
-# 生成章节配图
-python3 gemini-image-gen/scripts/generate_image.py \
-  --prompt "Wide landscape composition... A message envelope icon..." \
-  --aspect-ratio 16:9 \
-  --output "<Markdown文件目录>/assets/illustration_02_routing.png"
-```
+按照插图在文章中出现的顺序，在 `images` 列表中依次定义。脚本会自动按顺序逐张生成。
 
 ---
 
