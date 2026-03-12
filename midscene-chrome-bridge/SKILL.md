@@ -63,9 +63,18 @@ MIDSCENE_MODEL_FAMILY="模型族标识"
 
 详见 [模型配置文档](https://midscenejs.com/model-common-config)。
 
-## 前置条件
+## ⚠️ 前置条件（首次使用必读）
 
-用户需已安装并启用 Midscene Chrome 扩展。无需手动检查 — 直接连接即可。
+Bridge 模式需要用户在 Chrome 中安装 **Midscene 扩展**，否则连接会失败。
+
+**Agent 在首次执行 bridge 命令前，必须先提醒用户确认以下步骤：**
+
+1. **安装扩展** — 从 Chrome Web Store 安装：[Midscene.js](https://chromewebstore.google.com/detail/midscenejs/gbldofcpkknbggpkmbdaefngejllnief)
+2. **确认 Chrome 已打开** — Bridge 模式需要 Chrome 处于运行状态
+3. **确认扩展状态** — 扩展图标上应显示 🟡 黄色圆点（表示 Listening），表示正在监听连接
+4. **首次连接时** — 扩展会弹出确认对话框，用户需点击 **"Allow"**（可选 "Always Allow" 跳过后续弹窗）
+
+> 💡 如果用户确认已安装过扩展，可以跳过提醒直接连接。
 
 ---
 
