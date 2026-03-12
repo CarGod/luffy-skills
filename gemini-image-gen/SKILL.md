@@ -4,7 +4,7 @@ description: 使用 Gemini API 生成或编辑图片，支持指定宽高比（1
 license: MIT
 metadata:
   author: Luffy Liu
-  version: "1.1"
+  version: "1.2"
 ---
 
 # Gemini Image Generation Skill
@@ -48,11 +48,62 @@ source ~/.zshrc 2>/dev/null; echo $GEMINI_ANTIGRAVITY_KEY | head -c 10
 
 ## 使用方法
 
-通过 `run_command` 工具执行 Python 脚本。脚本路径：
+脚本路径（需使用**绝对路径**）：
 
 ```
 gemini-image-gen/scripts/generate_image.py
 ```
+
+### ⚠️ 长提示词必须用 Python 脚本调用（禁止直接 shell 执行）
+
+> 当提示词较长（超过一行）、包含中文、或包含嵌套引号时，**严禁**在终端中直接用 `python3 generate_image.py --prompt "..."` 方式调用！
+>
+> 直接在 shell 中执行长 prompt 会导致：
+> - 多行文本转义错乱
+> - 中文字符被截断或乱码
+> - 引号嵌套导致命令解析失败
+>
+> **正确做法**：创建一个临时 Python 脚本（如 `/tmp/gen_images.py`），在脚本中用 Python 字符串定义提示词，通过 `subprocess` 调用 `generate_image.py`。
+
+#### Python 脚本调用模板
+
+将以下模板写入 `/tmp/gen_images.py`，填入具体的 prompt 和输出路径，然后用 `run_command` 执行 `python3 /tmp/gen_images.py`：
+
+```python
+import subprocess, sys, os
+
+SCRIPT = "<generate_image.py 的绝对路径>"
+
+images = [
+    {
+        "name": "output_01.png",
+        "prompt": (
+            "A detailed illustration of ... "
+            'with Chinese text labels reading "关键词". '
+        ),
+        "aspect_ratio": "16:9",
+    },
+    # ... 按需添加更多
+]
+
+for i, img in enumerate(images):
+    print(f"\nGenerating {i+1}/{len(images)}: {img['name']}")
+    cmd = [
+        sys.executable, SCRIPT,
+        "--prompt", img["prompt"],
+        "--aspect-ratio", img.get("aspect_ratio", "1:1"),
+        "--output", img["name"],
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    if result.stdout:
+        print(result.stdout[-300:])
+    if result.returncode != 0:
+        print(f"ERROR: {result.stderr[-300:]}")
+    else:
+        print(f"SUCCESS: {img['name']}")
+```
+
+> 💡 **短提示词（纯英文、单行、无特殊字符）**可以直接用 bash 调用，见下方简单示例。
 
 ### 基本参数
 
@@ -69,7 +120,9 @@ gemini-image-gen/scripts/generate_image.py
 
 ---
 
-## 调用示例
+## 调用示例（短提示词 — bash 直接调用）
+
+> 以下示例仅适用于**短提示词**（纯英文、单行）。长提示词或含中文的场景，必须使用上方的 Python 脚本模板。
 
 ### 1. 生成 16:9 宽屏图片
 
