@@ -27,13 +27,20 @@ allowed-tools:
 
 ## 环境配置
 
-在当前工作目录创建 `.env` 文件：
+配置文件统一存放在用户主目录 `~/.env`：
 
 ```bash
+# ~/.env
 MIDSCENE_MODEL_API_KEY="你的-api-key"
 MIDSCENE_MODEL_NAME="模型名称"
 MIDSCENE_MODEL_BASE_URL="https://..."
 MIDSCENE_MODEL_FAMILY="模型族标识"
+```
+
+**⚠️ 每次执行 midscene 命令前，必须先加载环境变量：**
+
+```bash
+export $(cat ~/.env | grep -v '^#' | xargs)
 ```
 
 详见 [模型配置文档](https://midscenejs.com/model-common-config)。

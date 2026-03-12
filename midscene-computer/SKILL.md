@@ -44,14 +44,23 @@ allowed-tools:
 
 ## 环境配置
 
-Midscene 需要具备**视觉定位能力**的多模态模型。在当前工作目录创建 `.env` 文件（Midscene 会自动加载）：
+Midscene 需要具备**视觉定位能力**的多模态模型。配置文件统一存放在用户主目录 `~/.env`：
 
 ```bash
+# ~/.env
 MIDSCENE_MODEL_API_KEY="你的-api-key"
 MIDSCENE_MODEL_NAME="模型名称"
 MIDSCENE_MODEL_BASE_URL="https://..."
 MIDSCENE_MODEL_FAMILY="模型族标识"
 ```
+
+**⚠️ 每次执行 midscene 命令前，必须先加载环境变量：**
+
+```bash
+export $(cat ~/.env | grep -v '^#' | xargs)
+```
+
+> 💡 Midscene 默认从当前工作目录加载 `.env`，但为了避免每个目录都放一份，统一使用 `~/.env` 并通过 `export` 注入环境变量。
 
 ### 常用模型配置示例
 
