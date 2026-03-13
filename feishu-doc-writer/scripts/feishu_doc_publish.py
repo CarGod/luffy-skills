@@ -13,6 +13,26 @@ from urllib import request, parse
 DEFAULT_OWNER_OPENID = os.environ.get("FEISHU_OWNER_OPENID")
 IMAGE_MARKER_RE = re.compile(r"^\[\[IMAGE:(.+?)\]\]$")
 
+# Map platform shorthand to full URL domain
+DOMAIN_MAP = {
+    "feishu": "feishu.cn",
+    "lark": "larksuite.com",
+}
+
+
+def resolve_url_domain(feishu_cfg: dict) -> str:
+    """Resolve the URL domain from config, handling platform shorthands."""
+    # Explicit urlDomain takes highest priority
+    url_domain = feishu_cfg.get("urlDomain")
+    if url_domain:
+        return url_domain
+    domain = feishu_cfg.get("domain", "feishu")
+    # If it contains a dot, it's already a full domain (e.g. morehappiness.feishu.cn)
+    if "." in domain:
+        return domain
+    # Map shorthand: feishu -> feishu.cn, lark -> larksuite.com
+    return DOMAIN_MAP.get(domain, f"{domain}.cn")
+
 
 def api_json(url: str, method: str = "GET", payload=None, token: str | None = None, timeout: int = 120):
     headers = {"Content-Type": "application/json"}
@@ -66,10 +86,17 @@ def create_doc(token: str, title: str):
 
 
 def normalize_inline_markdown(text: str) -> str:
-    # Feishu doc publishing in this workflow does not reliably map Markdown bold
-    # to rich-text styling, so strip the raw markers to avoid visible ** / __.
+    """Strip Markdown inline markers that Feishu cannot render as rich text."""
+    # Bold: **text** / __text__
     text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
     text = re.sub(r"__(.+?)__", r"\1", text)
+    # Italic: *text* / _text_ (single markers, after bold is already stripped)
+    text = re.sub(r"(?<!\w)\*(.+?)\*(?!\w)", r"\1", text)
+    text = re.sub(r"(?<!\w)_(.+?)_(?!\w)", r"\1", text)
+    # Inline code: `code`
+    text = re.sub(r"`(.+?)`", r"\1", text)
+    # Links: [text](url) -> text
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
     return text
 
 
@@ -243,7 +270,7 @@ def main():
 
     markdown_text = Path(args.markdown_file).read_text(encoding="utf-8")
     feishu_cfg = get_feishu_config()
-    domain = feishu_cfg.get("domain", "feishu.cn")
+    url_domain = resolve_url_domain(feishu_cfg)
     tenant_token = get_tenant_token(feishu_cfg)
     doc_token = create_doc(tenant_token, args.title)
     image_count = publish_markdown(tenant_token, doc_token, markdown_text)
@@ -253,7 +280,7 @@ def main():
         "ok": True,
         "title": args.title,
         "doc_token": doc_token,
-        "url": f"https://{domain}/docx/{doc_token}",
+        "url": f"https://{url_domain}/docx/{doc_token}",
         "owner_openid": args.owner_openid,
         "images_inserted": image_count,
         "permission": "full_access",
