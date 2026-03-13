@@ -63,7 +63,7 @@ def detect_available_languages(url: str, extra_args: list[str] | None = None) ->
     # BCP-47 language code pattern (e.g. 'zh', 'zh-Hans', 'zh-TW', 'en', 'pt-BR')
     lang_code_re = re.compile(r"^[a-zA-Z]{2,4}(-[a-zA-Z]{2,5})?$")
 
-    args = ["--list-subs", "--skip-download"] + (extra_args or []) + [url]
+    args = ["--list-subs", "--skip-download", "--ignore-no-formats-error"] + (extra_args or []) + [url]
     result = run_yt_dlp(args)
     # Only parse stdout — stderr contains Python warnings and yt-dlp debug output
     output = result.stdout
@@ -125,6 +125,7 @@ def try_download_subtitles(url: str, tmp_dir: str, sub_lang: str | None, cookie_
             "--write-subs",
             "--write-auto-subs",
             "--skip-download",
+            "--ignore-no-formats-error",
             "-o", output_template,
         ]
 
