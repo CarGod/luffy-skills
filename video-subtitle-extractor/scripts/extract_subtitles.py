@@ -104,35 +104,56 @@ def pick_best_language(available: list[str]) -> str | None:
 
 def try_download_subtitles(url: str, tmp_dir: str, sub_lang: str | None, cookie_browser: str | None = None) -> tuple[bool, str, list[str]]:
     """
-    Attempt to download subtitles. Returns (success, stderr_output, subtitle_files).
+    Attempt to download subtitles with sub-format fallback.
+    First tries explicit format (vtt/srt/json/best), then falls back to
+    letting yt-dlp auto-negotiate the format.
+    Returns (success, stderr_output, subtitle_files).
     """
-    output_template = os.path.join(tmp_dir, "%(id)s.%(ext)s")
-
-    args = [
-        "--write-subs",
-        "--write-auto-subs",
-        "--sub-format", "vtt/srt/json/best",
-        "--skip-download",
-        "-o", output_template,
+    # Try with explicit sub-format first, then without (auto-negotiate)
+    sub_format_strategies = [
+        ("vtt/srt/json/best", "explicit format"),
+        (None, "auto-negotiate"),
     ]
 
-    if sub_lang:
-        args += ["--sub-lang", sub_lang]
+    last_stderr = ""
+    for sub_fmt, fmt_label in sub_format_strategies:
+        output_template = os.path.join(tmp_dir, "%(id)s.%(ext)s")
 
-    if cookie_browser:
-        args += ["--cookies-from-browser", cookie_browser]
+        args = [
+            "--write-subs",
+            "--write-auto-subs",
+            "--skip-download",
+            "-o", output_template,
+        ]
 
-    args.append(url)
+        if sub_fmt:
+            args += ["--sub-format", sub_fmt]
 
-    result = run_yt_dlp(args)
+        if sub_lang:
+            args += ["--sub-lang", sub_lang]
 
-    # Check for downloaded subtitle files
-    sub_files = []
-    for ext in ("*.vtt", "*.srt", "*.json", "*.xml"):
-        sub_files.extend(glob.glob(os.path.join(tmp_dir, ext)))
+        if cookie_browser:
+            args += ["--cookies-from-browser", cookie_browser]
 
-    success = len(sub_files) > 0
-    return success, result.stderr, sub_files
+        args.append(url)
+
+        result = run_yt_dlp(args)
+        last_stderr = result.stderr
+
+        # Check for downloaded subtitle files
+        sub_files = []
+        for ext in ("*.vtt", "*.srt", "*.json", "*.xml"):
+            sub_files.extend(glob.glob(os.path.join(tmp_dir, ext)))
+
+        if sub_files:
+            return True, last_stderr, sub_files
+
+        # If format-related error, try next strategy
+        if "Requested format" in last_stderr or "format is not available" in last_stderr.lower():
+            print(f"      ⚠ Sub-format '{fmt_label}' failed, trying next...")
+            continue
+
+    return False, last_stderr, []
 
 
 def download_subtitles(url: str, tmp_dir: str) -> list[str]:
