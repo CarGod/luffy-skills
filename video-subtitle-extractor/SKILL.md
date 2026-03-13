@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires python3, yt-dlp, webvtt-py, pysrt
 metadata:
   author: Luffy Liu
-  version: "1.0"
+  version: "2.0"
 ---
 
 # Video Subtitle Extractor
@@ -25,7 +25,11 @@ pip install -r requirements.txt
    ```bash
    python3 scripts/extract_subtitles.py "<VIDEO_URL>"
    ```
-2. The script will attempt to download the subtitles (auto-generated or manual) and convert the file to a plain text file, stripped of timestamps.
+2. The script will automatically:
+   - **Detect available subtitle languages** and pick the best one (zh-Hans > zh > en).
+   - **Try direct download first**, then automatically retry with browser cookies (Chrome → Firefox → Edge → Safari) if the platform requires authentication (e.g., YouTube's "Sign in to confirm you're not a bot").
+   - **Clean all HTML/XML tags** from the subtitle text.
+   - **Deduplicate** repeated lines from auto-generated subtitles.
 3. If successful, the script will output `SUCCESS` and print the `FILE_PATH` to the generated text file containing the subtitles.
 4. Use the `view_file` tool to read the contents of the generated file.
 5. Using the content from the file, answer the user's original prompt (e.g., summarize the video).
