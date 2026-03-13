@@ -8,6 +8,8 @@ Features:
   - Comprehensive HTML/XML tag cleaning
   - Clear diagnostic error messages
 """
+from __future__ import annotations
+
 import sys
 import subprocess
 import os
