@@ -9,6 +9,7 @@
 | Skill | Description | Version |
 |-------|-------------|---------|
 | [create-agent-skill](./create-agent-skill/) | Scaffolds new Agent Skills with proper directory structure and SKILL.md template | 1.0 |
+| [feishu-doc-writer](./feishu-doc-writer/) | Create Feishu/Lark documents with Markdown conversion, image insertion, and permission management (OpenClaw) | 1.1 |
 | [gemini-image-gen](./gemini-image-gen/) | Generate or edit images via Gemini API with custom aspect ratios, resolutions, and model selection | 1.0 |
 | [git-commit-convention](./git-commit-convention/) | Git commit message convention enforcing Chinese descriptions with structured format | 1.0 |
 | [md-illustration-inserter](./md-illustration-inserter/) | Auto-generate hand-drawn style illustrations and insert them into Markdown articles | 2.0 |
@@ -49,6 +50,7 @@ ln -s /path/to/luffy-skills ~/.gemini/antigravity/skills
 
 Some skills require additional configuration:
 
+- **feishu-doc-writer**: Requires Feishu app `appId` / `appSecret` in `~/.openclaw/openclaw.json` or `~/.feishu-doc-writer/config.json`
 - **gemini-image-gen** / **md-illustration-inserter**: Set the `GEMINI_ANTIGRAVITY_KEY` environment variable ([Get API Key](https://aistudio.google.com/apikey))
 - **video-subtitle-extractor**: Install Python dependencies (`pip install -r video-subtitle-extractor/requirements.txt`)
 
@@ -58,6 +60,9 @@ Some skills require additional configuration:
 luffy-skills/
 ├── create-agent-skill/          # Skill scaffolding helper
 │   └── SKILL.md
+├── feishu-doc-writer/           # Feishu doc writer (OpenClaw)
+│   ├── SKILL.md
+│   └── scripts/
 ├── gemini-image-gen/            # Gemini image generation
 │   ├── SKILL.md
 │   ├── README.md

@@ -11,6 +11,7 @@
 | Skill | 描述 | 版本 |
 |-------|------|------|
 | [create-agent-skill](./create-agent-skill/) | 帮助用户创建符合规范的新 Agent Skill，包括目录结构和 SKILL.md 模板 | 1.0 |
+| [feishu-doc-writer](./feishu-doc-writer/) | 创建飞书文档，支持 Markdown 转换、图片插入和权限管理（OpenClaw 专属） | 1.1 |
 | [gemini-image-gen](./gemini-image-gen/) | 使用 Gemini API 生成或编辑图片，支持自定义宽高比、分辨率和模型选择 | 1.1 |
 | [git-commit-convention](./git-commit-convention/) | Git Commit 提交规范，确保 commit 消息使用中文、格式规范、内容简洁 | 1.0 |
 | [video-subtitle-extractor](./video-subtitle-extractor/) | 从 YouTube、Bilibili 等平台提取视频字幕，转换为可读文本 | 1.0 |
@@ -73,6 +74,7 @@ ln -s ~/skills ~/.gemini/antigravity/skills
 
 | Skill | 所需配置 |
 |-------|---------|
+| **feishu-doc-writer** | 需要飞书应用的 `appId` / `appSecret`，配置在 `~/.openclaw/openclaw.json` 或 `~/.feishu-doc-writer/config.json` |
 | **gemini-image-gen** / **md-illustration-inserter** | 设置 `GEMINI_ANTIGRAVITY_KEY` 环境变量（[获取 API Key](https://aistudio.google.com/apikey)） |
 | **video-subtitle-extractor** | `pip install -r video-subtitle-extractor/requirements.txt` |
 | **midscene-\*** 系列 | 在工作目录创建 `.env` 文件，配置 `MIDSCENE_MODEL_*` 变量（详见各 Skill 内说明） |
@@ -85,6 +87,9 @@ ln -s ~/skills ~/.gemini/antigravity/skills
 luffy-skills/
 ├── create-agent-skill/          # Skill 脚手架工具
 │   └── SKILL.md
+├── feishu-doc-writer/           # 飞书文档写作（OpenClaw）
+│   ├── SKILL.md
+│   └── scripts/
 ├── gemini-image-gen/            # Gemini 图片生成
 │   ├── SKILL.md
 │   └── scripts/
