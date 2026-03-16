@@ -22,7 +22,6 @@
 |-------|------|------|
 | [md-illustration-inserter](./md-illustration-inserter/) | 为 Markdown 文章自动生成手绘风格插图并插入到对应位置 | 2.0 |
 | [spec-driven-dev](./spec-driven-dev/) | 规范驱动开发，引导式对话理清需求，输出 Spec 文档体系（主文档+子文档+项目清单） | 1.0 |
-| [vibe-product-designer](./vibe-product-designer/) | AI 时代的产品设计助手，用非确定性思维快速生成产品文档 | 1.0 |
 
 ### 🤖 Midscene 视觉自动化
 
@@ -101,8 +100,6 @@ luffy-skills/
 ├── spec-driven-dev/             # 规范驱动开发
 │   ├── SKILL.md
 │   └── references/
-├── vibe-product-designer/       # AI 产品设计助手
-│   └── SKILL.md
 ├── video-subtitle-extractor/    # 视频字幕提取
 │   ├── SKILL.md
 │   └── scripts/
