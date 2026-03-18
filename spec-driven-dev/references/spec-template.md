@@ -170,6 +170,7 @@
 
 | 文档 | 内容 | 路径 |
 |------|------|------|
+| UI 设计规范 | 色彩、字体、间距、动效、组件视觉规范 | [spec-design.md](./spec-design.md) |
 | 数据库设计 | 表结构、索引、关系图 | [spec-database.md](./spec-database.md) |
 | API 接口 | 接口详情、请求/响应体、错误码 | [spec-api.md](./spec-api.md) |
 | 前端页面 | 页面布局、组件拆解、交互说明 | [spec-ui.md](./spec-ui.md) |

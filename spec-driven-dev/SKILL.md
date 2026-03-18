@@ -137,18 +137,22 @@ metadata:
 
 根据以下规则判断是否需要拆分子文档：
 
-| 条件 | 拆分的子文档 | 文件名 |
-|------|------------|--------|
-| 数据模型 ≥ 3 张表 | 数据库设计详情 | `spec-database.md` |
-| API ≥ 5 个接口 | 接口设计详情 | `spec-api.md` |
-| 前端 ≥ 3 个页面/视图 | UI 页面详情 | `spec-ui.md` |
-| 有复杂业务状态机 | 业务逻辑详情 | `spec-logic.md` |
-| 需要第三方集成 | 集成方案详情 | `spec-integration.md` |
-| 有独立的部署需求 | 部署运维方案 | `spec-devops.md` |
+| 条件 | 拆分的子文档 | 文件名 | 模板 |
+|------|------------|--------|------|
+| 有前端 UI（任何含前端的项目） | UI 设计规范 | `spec-design.md` | [spec-design-template.md](references/spec-design-template.md) |
+| 数据模型 ≥ 3 张表 | 数据库设计详情 | `spec-database.md` | [spec-sub-template.md](references/spec-sub-template.md) |
+| API ≥ 5 个接口 | 接口设计详情 | `spec-api.md` | [spec-sub-template.md](references/spec-sub-template.md) |
+| 前端 ≥ 3 个页面/视图 | UI 页面详情 | `spec-ui.md` | [spec-sub-template.md](references/spec-sub-template.md) |
+| 有复杂业务状态机 | 业务逻辑详情 | `spec-logic.md` | [spec-sub-template.md](references/spec-sub-template.md) |
+| 需要第三方集成 | 集成方案详情 | `spec-integration.md` | [spec-sub-template.md](references/spec-sub-template.md) |
+| 有独立的部署需求 | 部署运维方案 | `spec-devops.md` | [spec-sub-template.md](references/spec-sub-template.md) |
 
 - 子文档存放路径：`{项目根目录}/specs/spec-{模块名}.md`
-- 严格按照 [spec-sub-template.md](references/spec-sub-template.md) 模板生成
+- `spec-design.md` 严格按照 [spec-design-template.md](references/spec-design-template.md) 生成
+- 其他子文档严格按照 [spec-sub-template.md](references/spec-sub-template.md) 生成
 - 每个子文档也应控制在 **1000-3000 Tokens**
+
+> 💡 **`spec-design.md` 特别说明**：此文档定义项目的 Design Tokens（设计令牌），包括色彩体系、字体排版、间距圆角、阴影、动效和组件视觉规范。对于已有项目，应从 CSS 变量 / 样式文件中提取实际值；对于新项目，应在此文档中先定义好设计系统再开始编码。AI 在实现任何新页面或组件时，必须参照此文档保持视觉一致性。
 
 #### 3.3 主文档引用子文档的方式
 
