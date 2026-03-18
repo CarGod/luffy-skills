@@ -6,17 +6,99 @@ import json
 import mimetypes
 import os
 import re
+import ssl
 import uuid
 from pathlib import Path
 from urllib import request, parse
+from urllib.error import URLError
+
+
+def _make_ssl_context() -> ssl.SSLContext:
+    """Create an SSL context, trying certifi first, falling back to unverified."""
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        ctx = ssl.create_default_context()
+        return ctx
+
+
+_SSL_CTX = _make_ssl_context()
+
+
+def _make_unverified_ssl_context() -> ssl.SSLContext:
+    """Create an SSL context that skips certificate verification."""
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    return ctx
+
+
+def _urlopen(req, timeout=120):
+    """urlopen wrapper with SSL fallback for macOS cert issues."""
+    try:
+        return request.urlopen(req, timeout=timeout, context=_SSL_CTX)
+    except (ssl.SSLCertVerificationError, URLError) as e:
+        # URLError wraps SSLCertVerificationError on macOS without certifi
+        is_ssl = isinstance(e, ssl.SSLCertVerificationError) or (
+            isinstance(e, URLError) and isinstance(e.reason, ssl.SSLCertVerificationError)
+        )
+        if not is_ssl:
+            raise
+        ctx = _make_unverified_ssl_context()
+        return request.urlopen(req, timeout=timeout, context=ctx)
 
 DEFAULT_OWNER_OPENID = os.environ.get("FEISHU_OWNER_OPENID")
 IMAGE_MARKER_RE = re.compile(r"^\[\[IMAGE:(.+?)\]\]$")
+FENCE_RE = re.compile(r"^```(\w*)$")
 
 # Map platform shorthand to full URL domain
 DOMAIN_MAP = {
     "feishu": "feishu.cn",
     "lark": "larksuite.com",
+}
+
+# Markdown language hint → Feishu code block language enum
+LANG_MAP = {
+    "python": 49, "py": 49,
+    "javascript": 30, "js": 30,
+    "typescript": 63, "ts": 63,
+    "java": 29,
+    "go": 22, "golang": 22,
+    "bash": 7, "sh": 7, "shell": 60,
+    "json": 28,
+    "html": 24,
+    "css": 12,
+    "sql": 56,
+    "yaml": 67, "yml": 67,
+    "markdown": 39, "md": 39,
+    "rust": 53,
+    "kotlin": 32, "kt": 32,
+    "swift": 61,
+    "ruby": 52, "rb": 52,
+    "php": 43,
+    "c": 10,
+    "cpp": 9, "c++": 9, "cxx": 9,
+    "csharp": 8, "cs": 8,
+    "xml": 66,
+    "dockerfile": 18,
+    "makefile": 38,
+    "diff": 69,
+    "graphql": 71,
+    "toml": 75,
+    "protobuf": 48, "proto": 48,
+    "scala": 57,
+    "r": 50,
+    "lua": 36,
+    "dart": 15,
+    "scss": 55,
+    "perl": 44,
+    "haskell": 27,
+    "erlang": 19,
+    "nginx": 40,
+    "powershell": 46,
+    "plaintext": 1, "text": 1, "txt": 1,
+    "objectivec": 41, "objc": 41,
 }
 
 
@@ -40,7 +122,7 @@ def api_json(url: str, method: str = "GET", payload=None, token: str | None = No
         headers["Authorization"] = f"Bearer {token}"
     data = None if payload is None else json.dumps(payload, ensure_ascii=False).encode("utf-8")
     req = request.Request(url, data=data, headers=headers, method=method)
-    with request.urlopen(req, timeout=timeout) as resp:
+    with _urlopen(req, timeout=timeout) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 
@@ -85,19 +167,87 @@ def create_doc(token: str, title: str):
     return data["data"]["document"]["document_id"]
 
 
-def normalize_inline_markdown(text: str) -> str:
-    """Strip Markdown inline markers that Feishu cannot render as rich text."""
-    # Bold: **text** / __text__
-    text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
-    text = re.sub(r"__(.+?)__", r"\1", text)
-    # Italic: *text* / _text_ (single markers, after bold is already stripped)
-    text = re.sub(r"(?<!\w)\*(.+?)\*(?!\w)", r"\1", text)
-    text = re.sub(r"(?<!\w)_(.+?)_(?!\w)", r"\1", text)
-    # Inline code: `code`
-    text = re.sub(r"`(.+?)`", r"\1", text)
-    # Links: [text](url) -> text
-    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
-    return text
+def parse_inline_elements(text: str) -> list[dict]:
+    """Parse inline Markdown markers and return a list of Feishu text_run elements.
+
+    Supports:
+      - ``code`` → inline_code style
+      - **bold** / __bold__ → bold style
+      - *italic* / _italic_ → italic style
+      - [text](url) → link style
+    """
+    elements: list[dict] = []
+    # Pattern matches inline code, bold, italic, and links in order of priority
+    # Inline code first since backtick is unambiguous
+    pattern = re.compile(
+        r'`([^`]+)`'                   # group 1: inline code
+        r'|\*\*(.+?)\*\*'             # group 2: bold **
+        r'|__(.+?)__'                 # group 3: bold __
+        r'|(?<!\w)\*(.+?)\*(?!\w)'    # group 4: italic *
+        r'|(?<!\w)_(.+?)_(?!\w)'      # group 5: italic _
+        r'|\[([^\]]+)\]\(([^)]+)\)'   # group 6,7: link [text](url)
+    )
+
+    last_end = 0
+    for m in pattern.finditer(text):
+        # Add plain text before this match
+        if m.start() > last_end:
+            plain = text[last_end:m.start()]
+            if plain:
+                elements.append({"text_run": {"content": plain, "text_element_style": {}}})
+
+        if m.group(1) is not None:
+            # Inline code
+            elements.append({"text_run": {
+                "content": m.group(1),
+                "text_element_style": {"inline_code": True},
+            }})
+        elif m.group(2) is not None:
+            # Bold **
+            elements.append({"text_run": {
+                "content": m.group(2),
+                "text_element_style": {"bold": True},
+            }})
+        elif m.group(3) is not None:
+            # Bold __
+            elements.append({"text_run": {
+                "content": m.group(3),
+                "text_element_style": {"bold": True},
+            }})
+        elif m.group(4) is not None:
+            # Italic *
+            elements.append({"text_run": {
+                "content": m.group(4),
+                "text_element_style": {"italic": True},
+            }})
+        elif m.group(5) is not None:
+            # Italic _
+            elements.append({"text_run": {
+                "content": m.group(5),
+                "text_element_style": {"italic": True},
+            }})
+        elif m.group(6) is not None:
+            # Link [text](url)
+            elements.append({"text_run": {
+                "content": m.group(6),
+                "text_element_style": {
+                    "link": {"url": parse.quote(m.group(7), safe="")},
+                },
+            }})
+
+        last_end = m.end()
+
+    # Add remaining plain text
+    if last_end < len(text):
+        remaining = text[last_end:]
+        if remaining:
+            elements.append({"text_run": {"content": remaining, "text_element_style": {}}})
+
+    # If nothing was parsed, return the whole text as a single element
+    if not elements:
+        elements.append({"text_run": {"content": text, "text_element_style": {}}})
+
+    return elements
 
 
 def line_to_block(line: str):
@@ -119,10 +269,23 @@ def line_to_block(line: str):
         block_type, prop, content = 12, "bullet", text[2:].strip()
     elif re.match(r"^\d+\. ", text):
         block_type, prop, content = 13, "ordered", re.sub(r"^\d+\. ", "", text).strip()
-    content = normalize_inline_markdown(content)
+    elements = parse_inline_elements(content)
     return {
         "block_type": block_type,
-        prop: {"elements": [{"text_run": {"content": content, "text_element_style": {}}}]},
+        prop: {"elements": elements},
+    }
+
+
+def make_code_block(code_lines: list[str], lang_hint: str) -> dict:
+    """Build a Feishu code block (block_type 14) from collected lines."""
+    lang_id = LANG_MAP.get(lang_hint.lower(), 1) if lang_hint else 1
+    content = "\n".join(code_lines)
+    return {
+        "block_type": 14,
+        "code": {
+            "style": {"language": lang_id},
+            "elements": [{"text_run": {"content": content, "text_element_style": {}}}],
+        },
     }
 
 
@@ -191,7 +354,7 @@ def upload_image_material(token: str, image_path: str, block_id: str):
         },
         method="POST",
     )
-    with request.urlopen(req, timeout=120) as resp:
+    with _urlopen(req, timeout=120) as resp:
         data = json.loads(resp.read().decode("utf-8"))
     if data.get("code") != 0:
         raise RuntimeError(f"upload image failed: {data}")
@@ -234,10 +397,44 @@ def grant_full_access(token: str, doc_token: str, openid: str):
 
 
 def publish_markdown(token: str, doc_token: str, markdown_text: str):
+    """Parse Markdown text and append blocks to a Feishu doc.
+
+    Handles fenced code blocks (```lang ... ```), image markers,
+    and normal Markdown lines.
+    """
     pending_blocks: list[dict] = []
     image_count = 0
+
+    in_code_fence = False
+    code_lines: list[str] = []
+    code_lang = ""
+
     for raw_line in markdown_text.splitlines():
-        marker = IMAGE_MARKER_RE.match(raw_line.strip())
+        stripped = raw_line.strip()
+
+        # --- fenced code block state machine ---
+        if not in_code_fence:
+            fence_match = FENCE_RE.match(stripped)
+            if fence_match:
+                in_code_fence = True
+                code_lang = fence_match.group(1)
+                code_lines = []
+                continue
+        else:
+            # Inside a code fence; check for closing fence
+            if stripped == "```":
+                in_code_fence = False
+                block = make_code_block(code_lines, code_lang)
+                pending_blocks.append(block)
+                code_lines = []
+                code_lang = ""
+                continue
+            else:
+                code_lines.append(raw_line)
+                continue
+
+        # --- image marker ---
+        marker = IMAGE_MARKER_RE.match(stripped)
         if marker:
             if pending_blocks:
                 append_blocks(token, doc_token, pending_blocks)
@@ -250,9 +447,17 @@ def publish_markdown(token: str, doc_token: str, markdown_text: str):
             replace_image(token, doc_token, block_id, file_token)
             image_count += 1
             continue
+
+        # --- normal line ---
         block = line_to_block(raw_line)
         if block:
             pending_blocks.append(block)
+
+    # Handle unclosed code fence (treat remaining lines as code block anyway)
+    if in_code_fence and code_lines:
+        block = make_code_block(code_lines, code_lang)
+        pending_blocks.append(block)
+
     if pending_blocks:
         append_blocks(token, doc_token, pending_blocks)
     return image_count

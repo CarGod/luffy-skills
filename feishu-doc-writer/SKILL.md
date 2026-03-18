@@ -4,7 +4,7 @@ description: Create or update Feishu/Lark documents from drafted content, with o
 license: MIT
 metadata:
   author: LuffyLiu
-  version: "1.1"
+  version: "1.2"
   origin: OpenClaw
 ---
 
@@ -174,31 +174,24 @@ Reply with the final Feishu doc link and confirm that edit permission was grante
 
 ## Input guidance
 
-Use simple Markdown structures for best compatibility:
+Supported Markdown structures:
 
 - `#` / `##` / `###` headings
 - normal paragraphs
 - `-` bullet lists
 - `1.` ordered lists
 - `> ` quotes
+- fenced code blocks (` ``` ` with optional language hint)
+- inline code (`` `code` ``)
+- `**bold**` / `__bold__`
+- `*italic*` / `_italic_`
+- `[text](url)` links
 
-### Important formatting rule
+### Code blocks
 
-Avoid Markdown bold markers such as:
+Fenced code blocks are converted to native Feishu code blocks with syntax highlighting. The language hint after the opening ` ``` ` is mapped to Feishu's built-in language list (Python, JavaScript, Go, Markdown, etc.). If the language is not recognized, PlainText is used.
 
-- `**bold**`
-- `__bold__`
-
-Feishu doc publishing in this workflow does not reliably convert those markers into rich-text bold. If included as raw Markdown, Feishu may display the literal asterisks/underscores.
-
-Preferred alternatives:
-
-- use headings for emphasis
-- use short standalone lines
-- use bullet points to highlight key ideas
-- if you need visual emphasis, rewrite the sentence instead of relying on bold markers
-
-The bundled script also strips common bold markers as a safety fallback, so the final document does not show raw `**` / `__` syntax.
+Inline code wrapped in single backticks is rendered with Feishu's inline code style.
 
 ## Failure handling
 
