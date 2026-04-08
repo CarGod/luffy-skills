@@ -37,7 +37,7 @@ metadata:
 
 ## ⚠️ 执行前必读
 
-1. **先检查 `project-manifest.md`**：如果项目根目录下存在此文件，先阅读它，它会指引你到 `specs/spec.md`。
+1. **先检查 `CLAUDE.md`**：如果项目根目录下存在此文件，先阅读它，了解项目结构和约束。
 2. **再检查 `specs/spec.md`**：如果存在，先阅读它了解项目全貌，再与用户沟通增量需求。
 3. **不要重复造轮子**：如果用户提到的功能在已有 spec 中已有定义，提醒用户该功能已存在。
 4. 所有 spec 文档存放在 `specs/` 目录下。
@@ -48,7 +48,7 @@ metadata:
 
 ```
 项目根目录/
-├── project-manifest.md          ← 301 重定向（≤5 行，指向 spec.md）
+├── CLAUDE.md                    ← AI Agent 工作指引（自动加载，项目结构 + 约束）
 ├── specs/
 │   ├── spec.md                  ← 🌐 网关入口（≤1000 tokens）
 │   ├── spec-database.md         ← 📊 数据模型详情（按需加载）
@@ -100,7 +100,16 @@ metadata:
 
 **你的角色**：架构师 + 全栈工程师
 
-#### 2.1 技术栈选型
+#### ⚡ AULP 子应用快速通道
+
+> 如果当前项目是 AULP 子应用（根目录存在 `AI_DEVELOPER_GUIDE.md`），**跳过 2.1 和 2.3**，技术栈和目录结构已由模板固定：
+> - 后端：Spring Boot 3 + MyBatis + MySQL (OceanBase 兼容)
+> - 前端：React 19 + Vite + Vanilla CSS
+> - 部署：阿里云 K8s + Docker（AULP 平台自动化）
+>
+> 直接执行 **2.2 模块划分**，聚焦业务功能拆解。
+
+#### 2.1 技术栈选型（非 AULP 项目）
 
 **直接给出推荐并说明理由**（不要让用户自己选）：
 - 编程语言 & 框架
@@ -116,7 +125,7 @@ metadata:
 |--------|-------------------|---------|------|
 | ... | ... | ... | ... |
 
-#### 2.3 目录结构设计
+#### 2.3 目录结构设计（非 AULP 项目）
 
 设计项目文件目录，**每个目录必须标注设计意图和修改规则**。
 
@@ -130,11 +139,13 @@ metadata:
 
 根据前两个阶段的结果，生成以下文档：
 
-#### 3.1 生成 `project-manifest.md`
+#### 3.1 生成 `CLAUDE.md`
 
-- 路径：`{项目根目录}/project-manifest.md`
-- 模板：[project-manifest-template.md](references/project-manifest-template.md)
-- 要求：**≤5 行**，纯跳板
+- 路径：`{项目根目录}/CLAUDE.md`
+- 模板：[claude-md-template.md](references/claude-md-template.md)
+- 要求：简洁的项目结构说明 + 核心约束 + 文档索引，Claude Code 启动时自动加载
+- **必须保留模板里的"两种 Token 不能混用 / AI 三种调用模式 / AulpAuthFilter 职责 / 跨线程 token 传递"四条 AULP 通用约束**，只能在第 8 条之后追加项目特定约束，禁止删改前 7 条
+- 详细生成规范见 `aulp-ai` Skill 的「CLAUDE.md 写作规范」章节
 
 #### 3.2 生成主入口 `spec.md`
 
@@ -231,5 +242,5 @@ metadata:
 - [ ] 每个子文档 ≤ 2000 tokens
 - [ ] 全部使用表格/列表/编号步骤，无叙述体散文
 - [ ] 全局约束已定义（技术栈红线、编码规范）
-- [ ] `project-manifest.md` ≤ 5 行
+- [ ] `CLAUDE.md` 已生成且包含项目结构和核心约束
 - [ ] 子文档链接正确且文件已创建
